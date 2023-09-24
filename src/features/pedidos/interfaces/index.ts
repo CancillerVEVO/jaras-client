@@ -3,14 +3,14 @@ export interface pedidos {
   titulo: string;
   descripcion: string;
   cliente: string;
-  estadoPedido: string;
+  estadoPedido: number;
   lugarEntrega: string;
   anticipoPagado: boolean;
   precio: number;
-  fechaEstimada: Date;
-  fechaCreacion: Date;
-  fechaEntrega?: Date;
-  fechaCancelacion?: Date;
+  fechaEstimada: string;
+  fechaCreacion: string;
+  fechaEntrega?: string;
+  fechaCancelacion?: string;
 }
 
 export interface Estados {

@@ -6,7 +6,7 @@ import {
   ScissorOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, Button, theme } from "antd";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 const { Header, Sider, Content } = Layout;
 
@@ -18,22 +18,19 @@ const MainLayout: React.FC = () => {
 
   const navigate = useNavigate();
   const navigateSection = (key: string) => {
-    switch (key) {
-      case "1":
-        navigate("/");
-        break;
-      case "2":
-        navigate("/pedidos");
-        break;
-      default:
-        break;
-    }
+    navigate(key);
   };
+
+  const location = useLocation();
+
+  const parentPath = "/" + location.pathname.split("/")[1];
+  const selectedKeys = location.pathname === parentPath ? [parentPath] : [];
 
   return (
     <Layout
       style={{
         margin: 0,
+        height: "100vh",
       }}
     >
       <Sider trigger={null} collapsible collapsed={collapsed}>
@@ -41,16 +38,16 @@ const MainLayout: React.FC = () => {
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={["1"]}
+          selectedKeys={selectedKeys}
           onSelect={({ key }) => navigateSection(key)}
           items={[
             {
-              key: "1",
+              key: "/",
               icon: <HomeOutlined />,
               label: "Principal",
             },
             {
-              key: "2",
+              key: "/pedidos",
               icon: <ScissorOutlined />,
               label: "Pedidos",
             },
@@ -75,8 +72,8 @@ const MainLayout: React.FC = () => {
           style={{
             margin: "2rem 16px",
             padding: 24,
-            minHeight: "100vh",
             background: colorBgContainer,
+            overflow: "auto",
           }}
         >
           <Outlet />

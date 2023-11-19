@@ -46,9 +46,17 @@ function PedidosMain() {
   lugarEntrega = isNaN(lugarEntrega) ? 1 : lugarEntrega;
   let status = parseInt(searchParams.get("status") ?? "1", 10);
   status = isNaN(status) ? 1 : status;
-
   let precio = searchParams.get("precio") ?? "default";
   precio = precio === "default" ? precio : precio === "asc" ? "asc" : "desc";
+  let anticipoPagado = searchParams.get("anticipoPagado") ?? true;
+  anticipoPagado = anticipoPagado === "true" ? true : false;
+  let fechaCreacion = searchParams.get("fechaCreacion") ?? "default";
+  fechaCreacion =
+    fechaCreacion === "asc"
+      ? fechaCreacion
+      : fechaCreacion === "asc"
+      ? "asc"
+      : "desc";
 
   return (
     <div>
@@ -78,6 +86,7 @@ function PedidosMain() {
             status: status.toString(),
             lugarEntrega: `${value}`,
             precio: precio,
+            anticipoPagado: anticipoPagado.toString(),
           });
         }}
       >
@@ -98,6 +107,7 @@ function PedidosMain() {
             status: status.toString(),
             lugarEntrega: lugarEntrega.toString(),
             precio: value,
+            anticipoPagado: anticipoPagado.toString(),
           });
         }}
       >
@@ -115,6 +125,7 @@ function PedidosMain() {
             status: `${value}`,
             lugarEntrega: lugarEntrega.toString(),
             precio: precio,
+            anticipoPagado: anticipoPagado.toString(),
           });
         }}
       >
@@ -122,6 +133,49 @@ function PedidosMain() {
         <Select.Option value={1}>En proceso</Select.Option>
         <Select.Option value={2}>Completado</Select.Option>
         <Select.Option value={3}>Cancelado</Select.Option>
+      </Select>
+
+      {/* FILTRO ANTICIPO PAGADO */}
+      <Typography.Text style={{ marginRight: 8 }}>
+        Anticipo Pagado:
+      </Typography.Text>
+      <Select
+        value={anticipoPagado}
+        style={{ width: 150, marginRight: 10 }}
+        onChange={(value) => {
+          setSearchParams({
+            status: status.toString(),
+            lugarEntrega: lugarEntrega.toString(),
+            precio: precio,
+            anticipoPagado: value.toString(),
+          });
+        }}
+      >
+        <Select.Option value={true}>Si</Select.Option>
+        <Select.Option value={false}>No</Select.Option>
+      </Select>
+
+      {
+        <Typography.Text style={{ marginRight: 8 }}>
+          Fecha de creacion:
+        </Typography.Text>
+      }
+
+      <Select
+        value={fechaCreacion}
+        style={{ width: 150, marginRight: 10 }}
+        onChange={(value) => {
+          setSearchParams({
+            status: status.toString(),
+            lugarEntrega: lugarEntrega.toString(),
+            precio: precio,
+            anticipoPagado: anticipoPagado.toString(),
+            fechaCreacion: value.toString(),
+          });
+        }}
+      >
+        <Select.Option value="asc">recientes primero</Select.Option>
+        <Select.Option value="desc">antiguas primero</Select.Option>
       </Select>
 
       <List
@@ -132,7 +186,9 @@ function PedidosMain() {
               pedido.lugarEntrega === data.lugares[lugarEntrega - 1].lugar;
             const statusFilter = pedido.estadoPedido === status || status === 4;
 
-            return lugarFilter && statusFilter;
+            const anticipoFilter = anticipoPagado === pedido.anticipoPagado;
+
+            return lugarFilter && statusFilter && anticipoFilter;
           })
           .sort((a, b) => {
             if (precio === "asc") {
@@ -140,6 +196,21 @@ function PedidosMain() {
             }
             if (precio === "desc") {
               return b.precio - a.precio;
+            }
+            return 0;
+          })
+          .sort((a, b) => {
+            if (fechaCreacion === "asc") {
+              return (
+                parseISO(a.fechaCreacion).getTime() -
+                parseISO(b.fechaCreacion).getTime()
+              );
+            }
+            if (fechaCreacion === "desc") {
+              return (
+                parseISO(b.fechaCreacion).getTime() -
+                parseISO(a.fechaCreacion).getTime()
+              );
             }
             return 0;
           })}

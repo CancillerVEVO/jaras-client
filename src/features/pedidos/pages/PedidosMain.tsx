@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Menu,
   Typography,
   List,
   Skeleton,
@@ -9,6 +8,7 @@ import {
   Row,
   Tag,
   Button,
+  Select,
 } from "antd";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
@@ -42,9 +42,13 @@ function PedidosMain() {
       return res.data.data;
     },
   });
-
+  let lugarEntrega = parseInt(searchParams.get("lugarEntrega") ?? "1", 10);
+  lugarEntrega = isNaN(lugarEntrega) ? 1 : lugarEntrega;
   let status = parseInt(searchParams.get("status") ?? "1", 10);
   status = isNaN(status) ? 1 : status;
+
+  let precio = searchParams.get("precio") ?? "default";
+  precio = precio === "default" ? precio : precio === "asc" ? "asc" : "desc";
 
   return (
     <div>
@@ -61,39 +65,92 @@ function PedidosMain() {
         </Col>
         <Col></Col>
       </Row>
-
-      <FloatButton onClick={() => navigate("crear")} />
-      <Menu
-        style={{
-          margin: 0,
-          padding: 0,
+      <br />
+      {/* LUGAR DE ENTREGA */}
+      <Typography.Text style={{ marginRight: 8 }}>
+        Lugar de Entrega:
+      </Typography.Text>
+      <Select
+        value={lugarEntrega}
+        style={{ width: 150, marginRight: 10 }}
+        onChange={(value) => {
+          setSearchParams({
+            status: status.toString(),
+            lugarEntrega: `${value}`,
+            precio: precio,
+          });
         }}
-        theme="light"
-        mode="horizontal"
-        onClick={(e) => {
-          setSearchParams({ status: e.key });
-        }}
-        activeKey={String(status)}
       >
-        {data?.estados.map((option) => {
-          return (
-            <Menu.Item
-              key={option.id}
-              style={{ margin: "0 1rem 0 0", padding: 0 }}
-            >
-              {option.estado}
-            </Menu.Item>
-          );
-        })}
-      </Menu>
+        <Select.Option value={4}>Todos</Select.Option>
+        {data?.lugares.map((option) => (
+          <Select.Option key={option.id} value={option.id}>
+            {option.lugar}
+          </Select.Option>
+        ))}
+      </Select>
+      {/* FILTRO PRECIO */}
+      <Typography.Text style={{ marginRight: 8 }}>Precio:</Typography.Text>
+      <Select
+        value={searchParams.get("precio")}
+        style={{ marginRight: 10, width: 150 }}
+        onChange={(value) => {
+          setSearchParams({
+            status: status.toString(),
+            lugarEntrega: lugarEntrega.toString(),
+            precio: value,
+          });
+        }}
+      >
+        <Select.Option value="asc">De menor a mayor</Select.Option>
+        <Select.Option value="desc">De mayor a menor</Select.Option>
+      </Select>
+      <FloatButton onClick={() => navigate("crear")} />
+      {/* FILTRO STATUS */}
+      <Typography.Text style={{ marginRight: 8 }}>Status:</Typography.Text>
+      <Select
+        value={status}
+        style={{ width: 150, marginRight: 10 }}
+        onChange={(value) => {
+          setSearchParams({
+            status: `${value}`,
+            lugarEntrega: lugarEntrega.toString(),
+            precio: precio,
+          });
+        }}
+      >
+        <Select.Option value={4}>Todos</Select.Option>
+        <Select.Option value={1}>En proceso</Select.Option>
+        <Select.Option value={2}>Completado</Select.Option>
+        <Select.Option value={3}>Cancelado</Select.Option>
+      </Select>
 
       <List
-        dataSource={data?.pedidos.filter(
-          (pedido) => pedido.estadoPedido === status
-        )}
+        dataSource={data?.pedidos
+          .filter((pedido) => {
+            const lugarFilter =
+              lugarEntrega === 4 ||
+              pedido.lugarEntrega === data.lugares[lugarEntrega - 1].lugar;
+            const statusFilter = pedido.estadoPedido === status || status === 4;
+
+            return lugarFilter && statusFilter;
+          })
+          .sort((a, b) => {
+            if (precio === "asc") {
+              return a.precio - b.precio;
+            }
+            if (precio === "desc") {
+              return b.precio - a.precio;
+            }
+            return 0;
+          })}
         loading={isLoading}
         renderItem={(item) => (
           <List.Item
+            style={{
+              padding: "1rem ",
+              height: "210px",
+              border: "1px solid #e8e8e8",
+            }}
             actions={[
               <Link to={item.id.toString()} key={"list-edit"}>
                 Editar
@@ -118,10 +175,28 @@ function PedidosMain() {
               <List.Item.Meta
                 key={item.id}
                 title={<a>{item.titulo}</a>}
-                description={`Cliente: ${item.cliente} - Lugar de entrega: ${item.lugarEntrega} - precio: ${item.precio} `}
+                description={`Cliente: ${item.cliente} - Lugar de entrega: ${item.lugarEntrega} `}
               />
             </Skeleton>
-
+            {
+              <Row>
+                <Tag
+                  color={
+                    item.estadoPedido === 1
+                      ? "orange"
+                      : item.estadoPedido === 2
+                      ? "green"
+                      : "red"
+                  }
+                >
+                  {item.estadoPedido == 1
+                    ? "En proceso"
+                    : item.estadoPedido == 2
+                    ? "Completado"
+                    : item.estadoPedido == 3 && "Cancelado"}
+                </Tag>
+              </Row>
+            }
             {
               <Row>
                 <Col span={8}>
@@ -133,28 +208,28 @@ function PedidosMain() {
                 </Col>
               </Row>
             }
-            {
-              <Tag
-                color={
-                  item.estadoPedido === 3
-                    ? "red"
-                    : item.estadoPedido === 1
-                    ? "orange"
-                    : "green"
-                }
-              >
-                {
-                  data?.estados.find(
-                    (estado) => estado.id === item.estadoPedido
-                  )?.estado
-                }
-              </Tag>
-            }
             {`fecha creacion: ${parseISO(
               item.fechaCreacion
             ).toLocaleString()} - fecha estimada: ${parseISO(
               item.fechaEstimada
             ).toLocaleDateString()}`}
+
+            {
+              <Row style={{ marginTop: 12 }}>
+                <Typography.Text style={{ marginRight: 8 }}>
+                  Anticipo:
+                </Typography.Text>
+                <Tag
+                  color={item.anticipoPagado ? "green-inverse" : "red-inverse"}
+                >
+                  {item.anticipoPagado ? "Pagado" : "No pagado"}
+                </Tag>
+                <Typography.Text style={{ marginRight: 8 }}>
+                  Precio:
+                </Typography.Text>
+                <Tag color="blue">{`$${item.precio}`}</Tag>
+              </Row>
+            }
           </List.Item>
         )}
       />

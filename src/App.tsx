@@ -7,7 +7,7 @@ import es from "antd/locale/es_ES";
 
 function App() {
   return (
-    <ConfigProvider locale={es}>
+    <ConfigProvider locale={es} theme={{}}>
       <BrowserRouter>
         <QueryClientProvider client={new QueryClient()}>
           <AppRoutes />

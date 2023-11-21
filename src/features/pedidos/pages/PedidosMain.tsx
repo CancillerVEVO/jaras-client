@@ -16,6 +16,8 @@ import jarasApi from "../../../api";
 
 import { OptionsResponse } from "../interfaces";
 import { parseISO } from "date-fns";
+import { useState } from "react";
+import CsvDownloader from "../components/CsvDownloader";
 
 function PedidosMain() {
   const navigate = useNavigate();
@@ -27,6 +29,11 @@ function PedidosMain() {
 
       return data.data;
     },
+  });
+
+  const [orderBy, setOrderBy] = useState({
+    property: null,
+    direction: "asc",
   });
 
   const queryClient = useQueryClient();
@@ -42,21 +49,12 @@ function PedidosMain() {
       return res.data.data;
     },
   });
-  let lugarEntrega = parseInt(searchParams.get("lugarEntrega") ?? "1", 10);
+  let lugarEntrega = parseInt(searchParams.get("lugarEntrega") ?? "4", 10);
   lugarEntrega = isNaN(lugarEntrega) ? 1 : lugarEntrega;
-  let status = parseInt(searchParams.get("status") ?? "1", 10);
+  let status = parseInt(searchParams.get("status") ?? "4", 10);
   status = isNaN(status) ? 1 : status;
-  let precio = searchParams.get("precio") ?? "default";
-  precio = precio === "default" ? precio : precio === "asc" ? "asc" : "desc";
   let anticipoPagado = searchParams.get("anticipoPagado") ?? true;
   anticipoPagado = anticipoPagado === "true" ? true : false;
-  let fechaCreacion = searchParams.get("fechaCreacion") ?? "default";
-  fechaCreacion =
-    fechaCreacion === "asc"
-      ? fechaCreacion
-      : fechaCreacion === "asc"
-      ? "asc"
-      : "desc";
 
   return (
     <div>
@@ -74,6 +72,33 @@ function PedidosMain() {
         <Col></Col>
       </Row>
       <br />
+      <br />
+      <CsvDownloader
+        data={data?.pedidos
+          .filter((pedido) => {
+            const lugarFilter =
+              lugarEntrega === 4 ||
+              pedido.lugarEntrega === data.lugares[lugarEntrega - 1].lugar;
+            const statusFilter = pedido.estadoPedido === status || status === 4;
+
+            const anticipoFilter = anticipoPagado === pedido.anticipoPagado;
+
+            return lugarFilter && statusFilter && anticipoFilter;
+          })
+          .sort((a, b) => {
+            if (orderBy.property === null) {
+              return 0;
+            }
+            if (orderBy.direction === "asc") {
+              return a[orderBy.property] > b[orderBy.property] ? 1 : -1;
+            } else {
+              return a[orderBy.property] < b[orderBy.property] ? 1 : -1;
+            }
+          })}
+        filename="pedidos.csv"
+      />
+      <br />
+      <br />
       {/* LUGAR DE ENTREGA */}
       <Typography.Text style={{ marginRight: 8 }}>
         Lugar de Entrega:
@@ -85,7 +110,6 @@ function PedidosMain() {
           setSearchParams({
             status: status.toString(),
             lugarEntrega: `${value}`,
-            precio: precio,
             anticipoPagado: anticipoPagado.toString(),
           });
         }}
@@ -97,23 +121,6 @@ function PedidosMain() {
           </Select.Option>
         ))}
       </Select>
-      {/* FILTRO PRECIO */}
-      <Typography.Text style={{ marginRight: 8 }}>Precio:</Typography.Text>
-      <Select
-        value={searchParams.get("precio")}
-        style={{ marginRight: 10, width: 150 }}
-        onChange={(value) => {
-          setSearchParams({
-            status: status.toString(),
-            lugarEntrega: lugarEntrega.toString(),
-            precio: value,
-            anticipoPagado: anticipoPagado.toString(),
-          });
-        }}
-      >
-        <Select.Option value="asc">De menor a mayor</Select.Option>
-        <Select.Option value="desc">De mayor a menor</Select.Option>
-      </Select>
       <FloatButton onClick={() => navigate("crear")} />
       {/* FILTRO STATUS */}
       <Typography.Text style={{ marginRight: 8 }}>Status:</Typography.Text>
@@ -124,7 +131,6 @@ function PedidosMain() {
           setSearchParams({
             status: `${value}`,
             lugarEntrega: lugarEntrega.toString(),
-            precio: precio,
             anticipoPagado: anticipoPagado.toString(),
           });
         }}
@@ -146,7 +152,7 @@ function PedidosMain() {
           setSearchParams({
             status: status.toString(),
             lugarEntrega: lugarEntrega.toString(),
-            precio: precio,
+
             anticipoPagado: value.toString(),
           });
         }}
@@ -155,28 +161,46 @@ function PedidosMain() {
         <Select.Option value={false}>No</Select.Option>
       </Select>
 
+      <br />
+      <br />
       {
         <Typography.Text style={{ marginRight: 8 }}>
-          Fecha de creacion:
+          Ordenar por:
         </Typography.Text>
       }
 
+      {/* ORDENAR POR */}
       <Select
-        value={fechaCreacion}
+        value={orderBy.property}
         style={{ width: 150, marginRight: 10 }}
         onChange={(value) => {
-          setSearchParams({
-            status: status.toString(),
-            lugarEntrega: lugarEntrega.toString(),
-            precio: precio,
-            anticipoPagado: anticipoPagado.toString(),
-            fechaCreacion: value.toString(),
+          setOrderBy({
+            property: value,
+            direction: orderBy.direction,
           });
         }}
       >
-        <Select.Option value="asc">recientes primero</Select.Option>
-        <Select.Option value="desc">antiguas primero</Select.Option>
+        <Select.Option value="precio">precio</Select.Option>
+        <Select.Option value="fechaCreacion">fecha de creacion</Select.Option>
       </Select>
+
+      {/* DIRECCION */}
+      <Select
+        value={orderBy.direction}
+        style={{ width: 150, marginRight: 10 }}
+        onChange={(value) => {
+          setOrderBy({
+            property: orderBy.property,
+            direction: value,
+          });
+        }}
+      >
+        <Select.Option value="asc">los mas bajos primero</Select.Option>
+        <Select.Option value="desc">los mas grandes primero</Select.Option>
+      </Select>
+
+      <br />
+      <br />
 
       <List
         dataSource={data?.pedidos
@@ -191,28 +215,14 @@ function PedidosMain() {
             return lugarFilter && statusFilter && anticipoFilter;
           })
           .sort((a, b) => {
-            if (precio === "asc") {
-              return a.precio - b.precio;
+            if (orderBy.property === null) {
+              return 0;
             }
-            if (precio === "desc") {
-              return b.precio - a.precio;
+            if (orderBy.direction === "asc") {
+              return a[orderBy.property] > b[orderBy.property] ? 1 : -1;
+            } else {
+              return a[orderBy.property] < b[orderBy.property] ? 1 : -1;
             }
-            return 0;
-          })
-          .sort((a, b) => {
-            if (fechaCreacion === "asc") {
-              return (
-                parseISO(a.fechaCreacion).getTime() -
-                parseISO(b.fechaCreacion).getTime()
-              );
-            }
-            if (fechaCreacion === "desc") {
-              return (
-                parseISO(b.fechaCreacion).getTime() -
-                parseISO(a.fechaCreacion).getTime()
-              );
-            }
-            return 0;
           })}
         loading={isLoading}
         renderItem={(item) => (

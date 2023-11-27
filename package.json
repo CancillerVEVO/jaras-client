@@ -14,10 +14,13 @@
     "antd": "^5.9.2",
     "antd-img-crop": "^4.13.0",
     "axios": "^1.5.0",
+    "chart.js": "^4.4.0",
     "date-fns": "^2.30.0",
     "dayjs": "^1.11.10",
     "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
+    "react-json-to-csv": "^1.2.0",
     "react-router-dom": "^6.16.0"
   },
   "devDependencies": {

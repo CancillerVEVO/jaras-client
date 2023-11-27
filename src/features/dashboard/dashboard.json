@@ -1,0 +1,45 @@
+{
+  "status": "success",
+  "message": "Dashboard obtenido con exito!",
+  "data": {
+    "pieChart": [
+      {
+        "type": "En Proceso",
+        "value": 7,
+        "color": "#FF6384"
+      },
+      {
+        "type": "Entregados",
+        "value": 9,
+        "color": "#36A2EB"
+      },
+      {
+        "type": "Cancelados",
+        "value": 11,
+        "color": "#FFCE56"
+      }
+    ],
+    "saleByDate": [
+      {
+        "fecha": "18/11/2023",
+        "total": 1914.99
+      }
+    ],
+    "count": {
+      "enProceso": 7,
+      "entregados": 9,
+      "cancelados": 11,
+      "total": 27
+    },
+    "totalSales": 1914.99,
+    "nextPayment": [
+      {
+        "fechaEstimada": "2023-11-19T06:00:00.000Z",
+        "precio": 150,
+        "id": 33,
+        "titulo": "Emmanuel López ",
+        "descripcion": "Descripcion"
+      }
+    ]
+  }
+}

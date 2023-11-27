@@ -42,7 +42,7 @@ const MainLayout: React.FC = () => {
           onSelect={({ key }) => navigateSection(key)}
           items={[
             {
-              key: "/",
+              key: "/dashboard",
               icon: <HomeOutlined />,
               label: "Principal",
             },

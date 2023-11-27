@@ -229,7 +229,7 @@ function PedidosMain() {
           <List.Item
             style={{
               padding: "1rem ",
-              height: "210px",
+              minHeight: "250px",
               border: "1px solid #e8e8e8",
             }}
             actions={[

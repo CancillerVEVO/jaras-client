@@ -5,7 +5,7 @@ import { DashboardResponse } from "../interfaces";
 import { PieChart } from "../components/PieChart";
 import { SalesChart } from "../components/SalesChart";
 import { Link } from "react-router-dom";
-import { color } from "chart.js/helpers";
+import { parseISO, format } from "date-fns";
 
 export default function Dashboard() {
   const { isLoading, data } = useQuery({
@@ -111,8 +111,21 @@ export default function Dashboard() {
           >
             $ {data?.nextPayment[0].precio}
           </p>
+          <p>
+            {parseISO(
+              data?.nextPayment[0].fechaEstimada || ""
+            ).toLocaleString()}
+          </p>
         </div>
       </Link>
+      <Card1
+        label="Total de ventas"
+        value={
+          <div>
+            <span style={{ fontSize: "4rem" }}>{`$ ${data?.totalSales}`}</span>
+          </div>
+        }
+      />
     </div>
   );
 }
